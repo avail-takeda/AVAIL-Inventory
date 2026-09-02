@@ -1,6 +1,6 @@
 {
-  "name":"AVAIL 棚卸",
-  "short_name":"AVAIL棚卸",
+  "name":"棚卸リーダー",
+  "short_name":"棚卸リーダー",
   "start_url":"./",
   "scope":"./",
   "display":"standalone",

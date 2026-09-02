@@ -1,9 +1,11 @@
 const KEY="avail_inventory_v1";
+const LOGO_KEY="avail_inventory_logo_v1";
+const TITLE_KEY="avail_inventory_title_v1";
 const $=id=>document.getElementById(id);
 let records=[], editing=null, reader=null, controls=null, scanning=false;
 
 function init(){
-  buildShelves(); restore(); render();
+  buildShelves(); restore(); restoreLogo(); restoreTitle(); render();
   $("camera").onclick=startCamera;
   $("close").onclick=stopCamera;
   $("register").onclick=register;
@@ -14,13 +16,23 @@ function init(){
   $("photoInput").onchange=decodePhoto;
   $("qty").onkeydown=e=>{if(e.key==="Enter")register()};
   $("jan").onfocus=()=>{if(!$("jan").value.trim()&&!editing)startCamera()};
+
+  $("settingsButton").onclick=openSettings;
+  $("closeSettings").onclick=closeSettings;
+  $("saveTitle").onclick=saveTitle;
+  $("titleInput").onkeydown=e=>{if(e.key==="Enter")saveTitle();};
+  $("uploadLogo").onclick=()=>$("logoInput").click();
+  $("logoInput").onchange=handleLogoUpload;
+  $("removeLogo").onclick=removeLogo;
+  $("logoButton").onclick=openSettings;
+
   if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
 function buildShelves(){
   const s=$("shelf");
   for(let i=0;i<14;i++)for(let n=1;n<=5;n++){
     const o=document.createElement("option");
-    o.value=String.fromCharCode(65+i)+"-"+String(n).padStart(2,"0");
+    o.value=String.fromCharCode(65+i)+"-"+String(n);
     o.textContent=o.value;s.appendChild(o);
   }
 }
@@ -44,9 +56,14 @@ function register(){
 function edit(i){
   const r=records[i];
   editing=i;
-  const m=r.shelf.match(/^([A-N]-0[1-5])(?:-([1-9]))?$/);
-  $("shelf").value=m?.[1]||r.shelf;
-  $("branch").value=m?.[2]||"";
+  const m=r.shelf.match(/^([A-N])-0?([1-5])(?:-([1-9]))?$/);
+  if(m){
+    $("shelf").value=`${m[1]}-${m[2]}`;
+    $("branch").value=m[3]||"";
+  }else{
+    $("shelf").value=r.shelf;
+    $("branch").value="";
+  }
   $("jan").value=r.jan;
   $("qty").value=r.qty;
   $("register").textContent="更新";
@@ -63,6 +80,67 @@ function cancelEdit(){
   $("qty").value="";
 }
 function del(i){if(confirm(`No.${i+1}を削除しますか？`)){records.splice(i,1);save();render();toast("削除しました。")}}
+function restoreTitle(){
+  const saved=localStorage.getItem(TITLE_KEY);
+  const title=(saved??"棚卸リーダー").trim()||"棚卸リーダー";
+  $("appTitle").textContent=title;
+  $("titleInput").value=title;
+}
+function saveTitle(){
+  const title=$("titleInput").value.trim()||"棚卸リーダー";
+  localStorage.setItem(TITLE_KEY,title);
+  $("appTitle").textContent=title;
+  $("titleInput").value=title;
+  toast("タイトルを保存しました。");
+}
+function restoreLogo(){
+  try{
+    const data=localStorage.getItem(LOGO_KEY);
+    if(data) applyLogo(data);
+  }catch{}
+}
+function applyLogo(data){
+  $("headerLogo").src=data;
+  $("headerLogo").hidden=false;
+  $("logoPlaceholder").hidden=true;
+  $("logoPreview").src=data;
+  $("logoPreview").hidden=false;
+  $("logoPreviewEmpty").hidden=true;
+}
+function openSettings(){
+  $("settingsModal").classList.remove("hidden");
+}
+function closeSettings(){
+  $("settingsModal").classList.add("hidden");
+}
+function handleLogoUpload(e){
+  const f=e.target.files?.[0];
+  e.target.value="";
+  if(!f)return;
+  if(!f.type.startsWith("image/"))return toast("画像ファイルを選択してください。");
+  if(f.size>3*1024*1024)return toast("ロゴ画像は3MB以下にしてください。");
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      localStorage.setItem(LOGO_KEY,reader.result);
+      applyLogo(reader.result);
+      toast("ロゴを設定しました。");
+    }catch{
+      toast("ロゴを保存できませんでした。画像サイズを小さくしてください。");
+    }
+  };
+  reader.readAsDataURL(f);
+}
+function removeLogo(){
+  localStorage.removeItem(LOGO_KEY);
+  $("headerLogo").hidden=true;
+  $("headerLogo").removeAttribute("src");
+  $("logoPlaceholder").hidden=false;
+  $("logoPreview").hidden=true;
+  $("logoPreview").removeAttribute("src");
+  $("logoPreviewEmpty").hidden=false;
+  toast("ロゴを削除しました。");
+}
 function render(){
   $("count").textContent=records.length+"件";
   $("list").innerHTML=records.length?records.map((r,i)=>`<div class="record"><div class="seq">No.${i+1}</div><div><div class="shelfname">${esc(r.shelf)}</div><div class="jantext">${esc(r.jan)}</div></div><div class="recordqty">${r.qty}</div><div class="recordActions"><button class="small" onclick="edit(${i})">編集</button><button class="small del" onclick="del(${i})">削除</button></div></div>`).join(""):'<div class="empty">まだデータがありません</div>';
@@ -70,7 +148,7 @@ function render(){
 function esc(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 function clearAll(){if(records.length&&confirm("入力済みデータをすべて削除しますか？")){records=[];save();render();toast("全データを削除しました。")}}
 function csvText(){return "\uFEFF"+"棚番号,JANコード,数量\r\n"+records.map(r=>[r.shelf,r.jan,r.qty].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n")+"\r\n"}
-function filename(){const d=new Date(),date=String(d.getFullYear()).slice(-2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");return `${date}_${records[0]?.shelf||"A-01"}.csv`}
+function filename(){const d=new Date(),date=String(d.getFullYear()).slice(-2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");return `${date}_${records[0]?.shelf||"A-1"}.csv`}
 async function exportCSV(){
   if(!records.length)return toast("出力するデータがありません。");
   const blob=new Blob([csvText()],{type:"text/csv;charset=utf-8"}),name=filename();
