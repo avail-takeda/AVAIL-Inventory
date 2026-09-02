@@ -12,8 +12,10 @@ function applyAppConfig(){
   }
   const logo = (window.APP_CONFIG?.logo || "").trim();
   if(logo){
-    $("headerLogo").src = logo;
-    $("headerLogo").hidden = false;
+    const img = $("headerLogo");
+    img.src = logo;
+    img.hidden = false;
+    img.alt = title + " ロゴ";
   }
 }
 function init(){
