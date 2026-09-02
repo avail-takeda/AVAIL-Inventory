@@ -69,3 +69,6 @@ CSVにも完成した棚番号（例：A-1-1）がそのまま出力されます
 ## v8 ロゴ表示修正版
 ロゴはdata URIではなく、リポジトリ内の `avail-logo.png` を直接表示します。
 GitHub Pagesでの画像パス問題を避けるため、`index.html` と `config.js` の両方がこのファイルを参照します。
+
+## v9
+アプリタイトルを `Stocktaking Counter` に変更しました。

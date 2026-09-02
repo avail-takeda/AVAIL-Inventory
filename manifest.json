@@ -1,6 +1,6 @@
 {
-  "name":"Buck Stock Counter",
-  "short_name":"Buck Stock Counter",
+  "name":"Stocktaking Counter",
+  "short_name":"Stocktaking Counter",
   "start_url":"./",
   "scope":"./",
   "display":"standalone",
