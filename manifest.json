@@ -1,6 +1,6 @@
 {
-  "name":"棚卸リーダー",
-  "short_name":"棚卸リーダー",
+  "name":"Buck Stock Counter",
+  "short_name":"Buck Stock Counter",
   "start_url":"./",
   "scope":"./",
   "display":"standalone",

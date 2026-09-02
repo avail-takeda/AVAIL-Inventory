@@ -6,23 +6,21 @@
 <meta name="theme-color" content="#111">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="棚卸リーダー">
+<meta name="apple-mobile-web-app-title" content="Buck Stock Counter">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.svg">
 <link rel="stylesheet" href="style.css">
-<title>棚卸リーダー</title>
+<title>Buck Stock Counter</title>
 </head>
 <body>
 <header>
   <div class="headerSide headerLeft">
-    <button id="logoButton" class="logoButton" type="button" aria-label="ロゴ設定">
-      <img id="headerLogo" alt="AVAIL" hidden>
-      <span id="logoPlaceholder">AVAIL</span>
-    </button>
+    <div class="logoButton" aria-label="AVAIL">
+      <img id="headerLogo" alt="AVAIL">
+    </div>
   </div>
-  <div class="headerTitle" id="appTitle">棚卸リーダー</div>
+  <div class="headerTitle" id="appTitle">Buck Stock Counter</div>
   <div class="headerSide headerRight">
-    <button id="settingsButton" class="settingsButton" type="button" aria-label="設定">⚙</button>
     <button id="clearAll">全削除</button>
   </div>
 </header>
@@ -60,37 +58,6 @@
 </section>
 </main>
 
-<div id="settingsModal" class="settingsModal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-  <div class="settingsPanel">
-    <div class="settingsHead">
-      <h2 id="settingsTitle">設定</h2>
-      <button id="closeSettings" type="button" aria-label="設定を閉じる">閉じる</button>
-    </div>
-    <div class="settingsBody">
-      <label for="titleInput">アプリタイトル</label>
-      <p class="settingsNote">ここで入力した文字列が、ヘッダー中央に表示されます。</p>
-      <input id="titleInput" class="settingsText" type="text" maxlength="30" placeholder="棚卸リーダー" autocomplete="off">
-      <div class="settingsActions titleActions">
-        <button id="saveTitle" class="secondary" type="button">タイトルを保存</button>
-      </div>
-
-      <label for="logoInput">ヘッダーのロゴ</label>
-      <p class="settingsNote">ロゴ画像をこの端末に保存します。画像はサーバーへアップロードされず、棚卸アプリ内にのみ保存されます。</p>
-      <div class="logoPreviewWrap">
-        <div class="logoPreviewBox">
-          <img id="logoPreview" alt="ロゴプレビュー" hidden>
-          <span id="logoPreviewEmpty">ロゴ未設定</span>
-        </div>
-      </div>
-      <div class="settingsActions">
-        <button id="uploadLogo" class="secondary" type="button">ロゴを選択</button>
-        <button id="removeLogo" class="secondary" type="button">ロゴを削除</button>
-      </div>
-      <input id="logoInput" type="file" accept="image/*" hidden>
-    </div>
-  </div>
-</div>
-
 <div id="modal" class="modal hidden">
 <div class="cameraPanel">
 <div class="cameraHead"><b>JAN読み取り</b><button id="close">閉じる</button></div>
@@ -102,6 +69,7 @@
 </div>
 <div id="toast" class="toast"></div>
 <script src="https://unpkg.com/@zxing/browser@0.2.1/umd/zxing-browser.min.js"></script>
+<script src="config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

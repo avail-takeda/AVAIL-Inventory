@@ -1,11 +1,23 @@
 const KEY="avail_inventory_v1";
-const LOGO_KEY="avail_inventory_logo_v1";
-const TITLE_KEY="avail_inventory_title_v1";
 const $=id=>document.getElementById(id);
 let records=[], editing=null, reader=null, controls=null, scanning=false;
 
+function applyAppConfig(){
+  const title = (window.APP_CONFIG?.title || "Buck Stock Counter").trim();
+  document.title = title;
+  const titleEl = $("appTitle");
+  if(titleEl){
+    titleEl.textContent = title;
+    titleEl.title = title;
+  }
+  const logo = (window.APP_CONFIG?.logo || "").trim();
+  if(logo){
+    $("headerLogo").src = logo;
+    $("headerLogo").hidden = false;
+  }
+}
 function init(){
-  buildShelves(); restore(); restoreLogo(); restoreTitle(); render();
+  buildShelves(); restore(); applyAppConfig(); render();
   $("camera").onclick=startCamera;
   $("close").onclick=stopCamera;
   $("register").onclick=register;
@@ -17,14 +29,6 @@ function init(){
   $("qty").onkeydown=e=>{if(e.key==="Enter")register()};
   $("jan").onfocus=()=>{if(!$("jan").value.trim()&&!editing)startCamera()};
 
-  $("settingsButton").onclick=openSettings;
-  $("closeSettings").onclick=closeSettings;
-  $("saveTitle").onclick=saveTitle;
-  $("titleInput").onkeydown=e=>{if(e.key==="Enter")saveTitle();};
-  $("uploadLogo").onclick=()=>$("logoInput").click();
-  $("logoInput").onchange=handleLogoUpload;
-  $("removeLogo").onclick=removeLogo;
-  $("logoButton").onclick=openSettings;
 
   if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
@@ -80,36 +84,6 @@ function cancelEdit(){
   $("qty").value="";
 }
 function del(i){if(confirm(`No.${i+1}を削除しますか？`)){records.splice(i,1);save();render();toast("削除しました。")}}
-function restoreTitle(){
-  const saved=localStorage.getItem(TITLE_KEY);
-  const title=(saved??"棚卸リーダー").trim()||"棚卸リーダー";
-  $("appTitle").textContent=title;
-  $("titleInput").value=title;
-}
-function saveTitle(){
-  const title=$("titleInput").value.trim()||"棚卸リーダー";
-  localStorage.setItem(TITLE_KEY,title);
-  $("appTitle").textContent=title;
-  $("titleInput").value=title;
-  toast("タイトルを保存しました。");
-}
-function restoreLogo(){
-  try{
-    const data=localStorage.getItem(LOGO_KEY);
-    if(data) applyLogo(data);
-  }catch{}
-}
-function applyLogo(data){
-  $("headerLogo").src=data;
-  $("headerLogo").hidden=false;
-  $("logoPlaceholder").hidden=true;
-  $("logoPreview").src=data;
-  $("logoPreview").hidden=false;
-  $("logoPreviewEmpty").hidden=true;
-}
-function openSettings(){
-  $("settingsModal").classList.remove("hidden");
-}
 function closeSettings(){
   $("settingsModal").classList.add("hidden");
 }
