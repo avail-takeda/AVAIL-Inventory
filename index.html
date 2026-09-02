@@ -17,7 +17,23 @@
 <main>
 <section class="card">
 <h2>入力</h2>
-<label>棚番号</label><select id="shelf"></select>
+<label>棚番号</label>
+<div class="shelfrow">
+<select id="shelf"></select>
+<select id="branch" aria-label="枝番号">
+<option value="">枝番号なし</option>
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+<option value="6">6</option>
+<option value="7">7</option>
+<option value="8">8</option>
+<option value="9">9</option>
+</select>
+</div>
+<small class="fieldnote">枝番号を選ぶと「A-01-1」の形式で管理します。</small>
 <label>JANコード</label>
 <div class="janrow"><input id="jan" inputmode="numeric" autocomplete="off" maxlength="13" placeholder="JANを入力・スキャン"><button id="camera">カメラ</button></div>
 <label>数量</label><input id="qty" type="number" inputmode="numeric" min="0" step="1" placeholder="数量">

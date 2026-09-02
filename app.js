@@ -27,17 +27,41 @@ function buildShelves(){
 function restore(){try{records=JSON.parse(localStorage.getItem(KEY)||"[]")}catch{records=[]}}
 function save(){localStorage.setItem(KEY,JSON.stringify(records))}
 function jan(v){return String(v||"").replace(/\D/g,"")}
+function getShelfNumber(){
+  const base=$("shelf").value;
+  const branch=$("branch").value;
+  return branch ? `${base}-${branch}` : base;
+}
 function register(){
-  const shelf=$("shelf").value,j=jan($("jan").value),q=$("qty").value;
+  const shelf=getShelfNumber(),j=jan($("jan").value),q=$("qty").value;
   if(!/^\d{8}(\d{5})?$/.test(j))return toast("JANコードは8桁または13桁で入力してください。");
-  if(q===""||!/^\d+$/.test(q))return toast("数量を入力してください。");
+  if(q===""||!/^[0-9]+$/.test(q))return toast("数量を入力してください。");
   const r={shelf,jan:j,qty:Number(q)};
   if(editing!==null){records[editing]=r;editing=null;$("register").textContent="登録";$("cancel").classList.add("hidden");toast("更新しました。")}
   else{records.push(r);toast("登録しました。")}
   save();render();$("jan").value="";$("qty").value="";$("jan").focus();
 }
-function edit(i){const r=records[i];editing=i;$("shelf").value=r.shelf;$("jan").value=r.jan;$("qty").value=r.qty;$("register").textContent="更新";$("cancel").classList.remove("hidden");scrollTo({top:0,behavior:"smooth"});$("qty").focus()}
-function cancelEdit(){editing=null;$("register").textContent="登録";$("cancel").classList.add("hidden");$("jan").value="";$("qty").value=""}
+function edit(i){
+  const r=records[i];
+  editing=i;
+  const m=r.shelf.match(/^([A-N]-0[1-5])(?:-([1-9]))?$/);
+  $("shelf").value=m?.[1]||r.shelf;
+  $("branch").value=m?.[2]||"";
+  $("jan").value=r.jan;
+  $("qty").value=r.qty;
+  $("register").textContent="更新";
+  $("cancel").classList.remove("hidden");
+  scrollTo({top:0,behavior:"smooth"});
+  $("qty").focus();
+}
+function cancelEdit(){
+  editing=null;
+  $("register").textContent="登録";
+  $("cancel").classList.add("hidden");
+  $("branch").value="";
+  $("jan").value="";
+  $("qty").value="";
+}
 function del(i){if(confirm(`No.${i+1}を削除しますか？`)){records.splice(i,1);save();render();toast("削除しました。")}}
 function render(){
   $("count").textContent=records.length+"件";
