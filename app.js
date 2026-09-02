@@ -11,11 +11,13 @@ function applyAppConfig(){
     titleEl.title = title;
   }
   const logo = (window.APP_CONFIG?.logo || "").trim();
+  const img = $("headerLogo");
   if(logo){
-    const img = $("headerLogo");
     img.src = logo;
     img.hidden = false;
     img.alt = title + " ロゴ";
+  } else {
+    img.hidden = true;
   }
 }
 function init(){

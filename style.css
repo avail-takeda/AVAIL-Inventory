@@ -1,4 +1,4 @@
-*{box-sizing:border-box}html,body{margin:0;background:#f2f3f5;color:#151515;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}body{padding-bottom:24px}button,input,select{font:inherit}button{border:0}header{position:sticky;top:0;z-index:10;background:#111;color:#fff;height:64px;padding:7px 12px;display:grid;grid-template-columns:96px minmax(0,1fr) 72px;align-items:center;position:sticky}
+*{box-sizing:border-box}html,body{margin:0;background:#f2f3f5;color:#151515;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}body{padding-bottom:24px}button,input,select{font:inherit}button{border:0}header{position:sticky;top:0;z-index:10;background:#111;color:#fff;height:64px;padding:7px 12px;display:grid;grid-template-columns:120px minmax(0,1fr) 84px;align-items:center}
 .headerSide{display:flex;align-items:center;min-width:0}
 .headerLeft{justify-content:flex-start}
 .headerRight{justify-content:flex-end;gap:4px}
@@ -37,7 +37,7 @@ main{width:min(760px,100%);margin:auto;padding:14px}.card{background:#fff;border
   .shelfrow #branch{width:120px;flex-basis:120px}
   header{grid-template-columns:72px minmax(0,1fr) 58px;height:60px;padding:6px 8px}
   .headerTitle{font-size:clamp(13px,4.7vw,18px);letter-spacing:.02em}
-  .logoButton{width:68px;height:46px}
-  .logoButton img{max-width:68px;max-height:44px}
+  .logoButton{width:82px;height:46px}
+  .logoButton img{max-width:82px;max-height:44px}
   .settingsButton{display:none}
 }
