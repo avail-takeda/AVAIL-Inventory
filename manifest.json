@@ -1,0 +1,10 @@
+{
+  "name":"AVAIL 棚卸",
+  "short_name":"AVAIL棚卸",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#f2f3f5",
+  "theme_color":"#111111",
+  "description":"AVAILのスマートフォン向け棚卸アプリ"
+}

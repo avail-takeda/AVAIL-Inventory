@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AVAIL棚卸">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.svg">
+<link rel="stylesheet" href="style.css">
+<title>AVAIL 棚卸</title>
+</head>
+<body>
+<header><div><b>AVAIL</b><span>棚卸</span></div><button id="clearAll">全削除</button></header>
+<main>
+<section class="card">
+<h2>入力</h2>
+<label>棚番号</label><select id="shelf"></select>
+<label>JANコード</label>
+<div class="janrow"><input id="jan" inputmode="numeric" autocomplete="off" maxlength="13" placeholder="JANを入力・スキャン"><button id="camera">カメラ</button></div>
+<label>数量</label><input id="qty" type="number" inputmode="numeric" min="0" step="1" placeholder="数量">
+<div class="actions"><button id="register" class="primary">登録</button><button id="cancel" class="secondary hidden">キャンセル</button></div>
+</section>
+<section class="card">
+<div class="listhead"><div><h2>入力済みデータ</h2><small id="count">0件</small></div><button id="csv" class="export">CSV出力</button></div>
+<div id="list"><div class="empty">まだデータがありません</div></div>
+</section>
+</main>
+
+<div id="modal" class="modal hidden">
+<div class="cameraPanel">
+<div class="cameraHead"><b>JAN読み取り</b><button id="close">閉じる</button></div>
+<div class="videoWrap"><video id="video" playsinline muted></video><div class="frame"></div><div class="guide">バーコードを枠内に合わせてください</div></div>
+<div id="status">カメラを起動しています…</div>
+<button id="photo" class="secondary wide">写真から読み取る</button>
+<input id="photoInput" type="file" accept="image/*" capture="environment" hidden>
+</div>
+</div>
+<div id="toast" class="toast"></div>
+<script src="https://unpkg.com/@zxing/browser@0.2.1/umd/zxing-browser.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
