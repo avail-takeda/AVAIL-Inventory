@@ -41,3 +41,57 @@ main{width:min(760px,100%);margin:auto;padding:14px}.card{background:#fff;border
   .logoButton img{max-width:82px;max-height:44px}
   .settingsButton{display:none}
 }
+
+/* Header title + version */
+.headerTitleWrap{
+  min-width:0;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+}
+.appVersion{
+  margin-top:4px;
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:.08em;
+  opacity:.62;
+  white-space:nowrap;
+}
+@media (max-width:600px){
+  .appVersion{
+    margin-top:3px;
+    font-size:9px;
+  }
+}
+
+/* 担当者名 */
+.staffrow{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:14px;
+}
+.stafffield{
+  min-width:0;
+}
+.stafffield label{
+  display:block;
+  margin-bottom:7px;
+}
+.stafffield input{
+  width:100%;
+  box-sizing:border-box;
+  font-size:18px;
+  letter-spacing:.12em;
+  padding:12px 14px;
+}
+@media (max-width:600px){
+  .staffrow{gap:8px}
+  .stafffield input{
+    font-size:17px;
+    padding:11px 12px;
+  }
+}

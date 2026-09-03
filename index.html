@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Buck Stock Counter">
+<meta name="apple-mobile-web-app-title" content="Stocktaking Counter">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.svg">
 <link rel="stylesheet" href="style.css">
@@ -19,7 +19,7 @@
       <img id="headerLogo" src="avail-logo.png" alt="AVAIL">
     </div>
   </div>
-  <div class="headerTitle" id="appTitle">Stocktaking Counter</div>
+  <div class="headerTitle" id="headerTitle">Stocktaking Counter</div>
   <div class="headerSide headerRight">
     <button id="clearAll">全削除</button>
   </div>
@@ -27,6 +27,20 @@
 <main>
 <section class="card">
 <h2>入力</h2>
+
+<div class="staffrow">
+  <div class="stafffield">
+    <label for="staff1">担当1</label>
+    <input id="staff1" type="text" lang="ja" inputmode="text" autocomplete="name"
+      maxlength="3" placeholder="担当者名" enterkeyhint="next">
+  </div>
+  <div class="stafffield">
+    <label for="staff2">担当2</label>
+    <input id="staff2" type="text" lang="ja" inputmode="text" autocomplete="name"
+      maxlength="3" placeholder="担当者名" enterkeyhint="next">
+  </div>
+</div>
+
 <div class="shelfLabels">
   <label>棚番号</label>
   <label>枝番号</label>

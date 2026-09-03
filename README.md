@@ -52,14 +52,14 @@ CSVにも完成した棚番号（例：A-1-1）がそのまま出力されます
 `config.js` で全ユーザー共通のタイトルとロゴを設定できます。
 
 現在のタイトル：
-`Buck Stock Counter`
+`Stocktaking Counter`
 
 ロゴをGitHubリポジトリに `logo.png` として追加した場合は、
 `config.js` の `logo: ""` を `logo: "logo.png"` に変更してください。
 
 
 ## v6 共通タイトル・ロゴ
-タイトルとロゴは `config.js` で管理します。現在のタイトルは `Buck Stock Counter`、ロゴはリポジトリ内の `logo.png` です。GitHub上で `config.js` や `logo.png` を更新してPagesを再デプロイすると、同じURLを利用する全ユーザーに反映されます。端末ごとのタイトル・ロゴ設定画面は廃止しています。
+タイトルとロゴは `config.js` で管理します。現在のタイトルは `Stocktaking Counter`、ロゴはリポジトリ内の `logo.png` です。GitHub上で `config.js` や `logo.png` を更新してPagesを再デプロイすると、同じURLを利用する全ユーザーに反映されます。端末ごとのタイトル・ロゴ設定画面は廃止しています。
 
 ## v7 ヘッダー修正版
 - AVAILロゴは `config.js` に直接埋め込み、`logo.png` の相対パスに依存しない構成です。
@@ -72,3 +72,18 @@ GitHub Pagesでの画像パス問題を避けるため、`index.html` と `confi
 
 ## v9
 アプリタイトルを `Stocktaking Counter` に変更しました。
+
+
+## v10
+タイトル反映とキャッシュ対策を修正。タイトルは Stocktaking Counter に統一。
+
+
+## v11
+ヘッダー中央のタイトル下にアプリバージョン `v1.0.0` を表示。バージョンは `config.js` で変更できます。
+
+## v1.1.0
+- 入力欄の上部に「担当1」「担当2」を追加
+- 担当者名はlocalStorageに保存し、次回アクセス時も引き継ぎ
+- 担当者名はCSVの列には出力しない
+- CSVファイル名を `YYMMDD_棚番号枝番号_担当名1担当名2.csv` に変更
+- 担当者入力は日本語テキスト入力を想定（`lang="ja"` / `inputmode="text"`）

@@ -1,23 +1,30 @@
 const KEY="avail_inventory_v1";
+const STAFF_KEY="avail_inventory_staff_v1";
 const $=id=>document.getElementById(id);
 let records=[], editing=null, reader=null, controls=null, scanning=false;
 
 function applyAppConfig(){
-  const title = (window.APP_CONFIG?.title || "Buck Stock Counter").trim();
+  const title = (window.APP_CONFIG?.title || "Stocktaking Counter").trim() || "Stocktaking Counter";
   document.title = title;
-  const titleEl = $("appTitle");
-  if(titleEl){
-    titleEl.textContent = title;
-    titleEl.title = title;
-  }
+  const versionEl = document.getElementById("appVersion");
+  if(versionEl) versionEl.textContent = window.APP_CONFIG?.version || "";
+  ["headerTitle", "appTitle"].forEach(id => {
+    const el = document.getElementById(id);
+    if(el){
+      el.textContent = title;
+      el.title = title;
+    }
+  });
   const logo = (window.APP_CONFIG?.logo || "").trim();
-  const img = $("headerLogo");
-  if(logo){
-    img.src = logo;
-    img.hidden = false;
-    img.alt = title + " ロゴ";
-  } else {
-    img.hidden = true;
+  const img = document.getElementById("headerLogo");
+  if(img){
+    if(logo){
+      img.src = logo;
+      img.hidden = false;
+      img.alt = title + " ロゴ";
+    } else {
+      img.hidden = true;
+    }
   }
 }
 function init(){
@@ -30,6 +37,12 @@ function init(){
   $("clearAll").onclick=clearAll;
   $("photo").onclick=()=>$("photoInput").click();
   $("photoInput").onchange=decodePhoto;
+  $("staff1").oninput=saveStaff;
+  $("staff2").oninput=saveStaff;
+  $("staff1").onblur=saveStaff;
+  $("staff2").onblur=saveStaff;
+  $("staff1").onkeydown=e=>{if(e.key==="Enter")$("staff2").focus()};
+  $("staff2").onkeydown=e=>{if(e.key==="Enter")$("shelf").focus()};
   $("qty").onkeydown=e=>{if(e.key==="Enter")register()};
   $("jan").onfocus=()=>{if(!$("jan").value.trim()&&!editing)startCamera()};
 
@@ -44,7 +57,23 @@ function buildShelves(){
     o.textContent=o.value;s.appendChild(o);
   }
 }
-function restore(){try{records=JSON.parse(localStorage.getItem(KEY)||"[]")}catch{records=[]}}
+function restore(){
+  try{records=JSON.parse(localStorage.getItem(KEY)||"[]")}catch{records=[]}
+  try{
+    const staff=JSON.parse(localStorage.getItem(STAFF_KEY)||"{}");
+    $("staff1").value=staff.staff1||"";
+    $("staff2").value=staff.staff2||"";
+  }catch{
+    $("staff1").value="";
+    $("staff2").value="";
+  }
+}
+function saveStaff(){
+  localStorage.setItem(STAFF_KEY,JSON.stringify({
+    staff1:$("staff1").value.trim(),
+    staff2:$("staff2").value.trim()
+  }));
+}
 function save(){localStorage.setItem(KEY,JSON.stringify(records))}
 function jan(v){return String(v||"").replace(/\D/g,"")}
 function getShelfNumber(){
@@ -126,7 +155,15 @@ function render(){
 function esc(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 function clearAll(){if(records.length&&confirm("入力済みデータをすべて削除しますか？")){records=[];save();render();toast("全データを削除しました。")}}
 function csvText(){return "\uFEFF"+"棚番号,JANコード,数量\r\n"+records.map(r=>[r.shelf,r.jan,r.qty].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n")+"\r\n"}
-function filename(){const d=new Date(),date=String(d.getFullYear()).slice(-2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");return `${date}_${records[0]?.shelf||"A-1"}.csv`}
+function filename(){
+  const d=new Date();
+  const date=String(d.getFullYear()).slice(-2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
+  const shelf=records[0]?.shelf||getShelfNumber()||"A-1";
+  const staff1=$("staff1").value.trim();
+  const staff2=$("staff2").value.trim();
+  const staff=(`${staff1}${staff2}`).replace(/[\\/:*?"<>|]/g,"");
+  return `${date}_${shelf}_${staff}.csv`;
+}
 async function exportCSV(){
   if(!records.length)return toast("出力するデータがありません。");
   const blob=new Blob([csvText()],{type:"text/csv;charset=utf-8"}),name=filename();
