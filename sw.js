@@ -1,4 +1,4 @@
-const CACHE = "avail-inventory-v19";
+const CACHE = "avail-inventory-v20";
 const APP_SHELL = [
   "./",
   "./index.html",

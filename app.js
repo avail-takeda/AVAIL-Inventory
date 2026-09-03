@@ -13,7 +13,7 @@ function setReadNo(no){
   if(el)el.textContent=no==null?"—":String(no);
 }
 function applyAppConfig(){
-  const title=(window.APP_CONFIG?.title||"Stocktaking Counter").trim()||"Stocktaking Counter";
+  const title=(window.APP_CONFIG?.title||"棚卸BCリーダー").trim()||"棚卸BCリーダー";
   document.title=title;
   const v=$("appVersion"); if(v)v.textContent=window.APP_CONFIG?.version||"";
   const t=$("headerTitle"); if(t){t.textContent=title;t.title=title;}
@@ -188,48 +188,32 @@ function clearHistory(){
 }
 async function exportCSV(){
   if(!records.length)return toast("出力するデータがありません。");
-
-  // CSVファイルを1つだけ生成します。TXT等の補助ファイルは一切生成しません。
-  const blob=new Blob([csvText()],{type:"text/csv;charset=utf-8"});
   const name=filename();
+  const blob=new Blob([csvText()],{type:"text/csv;charset=utf-8"});
 
-  // スマートフォン等で共有できる場合も、共有対象はCSVファイル1個だけ。
+  // 出力対象はCSVファイル1個だけ。TXT等は生成しません。
   try{
     const file=new File([blob],name,{type:"text/csv"});
-    if(navigator.share&&navigator.canShare?.({files:[file]})){
+    if(typeof navigator.share==="function"&&typeof navigator.canShare==="function"&&navigator.canShare({files:[file]})){
       await navigator.share({title:name,files:[file]});
       upsertHistory(name);
       if(confirm("CSVの送信が完了しました。入力済みデータを消去しますか？")){
-        records=[];save();resetInput();render();
-        toast("CSV出力済みデータを消去しました。");
-      }else{
-        toast(name+"を出力しました。");
-      }
+        records=[];save();resetInput();render();toast("CSV出力済みデータを消去しました。");
+      }else toast(name+"を出力しました。");
       return;
     }
-  }catch(e){
-    if(e?.name==="AbortError")return;
-  }
+  }catch(e){if(e?.name==="AbortError")return;}
 
-  // 共有非対応端末では、CSVファイル1個だけをダウンロード。
-  const a=document.createElement("a");
-  const u=URL.createObjectURL(blob);
-  a.href=u;
-  a.download=name;
-  a.type="text/csv";
-  a.style.display="none";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(u),1000);
-
+  // 共有非対応時もCSVファイルだけをダウンロード。
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");
+  link.href=url;link.download=name;link.setAttribute("download",name);
+  link.style.display="none";document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
   upsertHistory(name);
   if(confirm("CSVのダウンロードを開始しました。入力済みデータを消去しますか？")){
-    records=[];save();resetInput();render();
-    toast("CSV出力済みデータを消去しました。");
-  }else{
-    toast(name+"を出力しました。");
-  }
+    records=[];save();resetInput();render();toast("CSV出力済みデータを消去しました。");
+  }else toast(name+"を出力しました。");
 }
 async function startCamera(){
   if(scanning)return;$("modal").classList.remove("hidden");$("status").textContent="カメラを起動しています…";
