@@ -45,7 +45,6 @@
   <label>棚番号</label>
   <label>枝番号</label>
 </div>
-<div class="readno-display"><span class="readno-label">№</span><span id="readNo">—</span></div>
 <div class="shelfrow">
 <select id="shelf" aria-label="棚番号"></select>
 <select id="branch" aria-label="枝番号">
@@ -62,6 +61,7 @@
 </select>
 </div>
 <small class="fieldnote">枝番号を選ぶと「A-1-1」の形式で管理します。</small>
+<div class="readno-display" aria-live="polite"><span class="readno-label">№</span><span id="readNo">1</span></div>
 <label>JANコード</label>
 <div class="janrow"><input id="jan" inputmode="numeric" autocomplete="off" maxlength="13" placeholder="JANを入力・スキャン"><button id="camera">カメラ</button></div>
 <label>数量</label><input id="qty" type="number" inputmode="numeric" min="0" step="1" placeholder="数量">

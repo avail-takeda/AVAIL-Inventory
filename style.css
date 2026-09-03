@@ -96,8 +96,11 @@ main{width:min(760px,100%);margin:auto;padding:14px}.card{background:#fff;border
   }
 }
 
-/* v1.2.0 */
-.readno-display{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;margin:4px 0 2px;font-weight:800;font-size:16px}.readno-label{font-weight:900}#readNo{min-width:2.5em}
-header{box-sizing:border-box;width:100%;display:grid;grid-template-columns:100px minmax(0,1fr) 72px;column-gap:6px;align-items:center;overflow:hidden}.headerSide{min-width:0}.headerLeft{width:100px;overflow:hidden}.logoButton{width:92px;height:50px;padding:0;overflow:hidden;display:flex;align-items:center;justify-content:flex-start}.logoButton img{display:block;width:auto;height:auto;max-width:92px;max-height:46px;object-fit:contain}.headerTitleWrap{min-width:0;width:100%;overflow:hidden}.headerTitle{min-width:0;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
-@media(max-width:600px){header{height:58px;padding:5px 7px;grid-template-columns:70px minmax(0,1fr) 44px;column-gap:4px}.headerLeft{width:70px}.logoButton{width:66px;height:46px}.logoButton img{max-width:66px;max-height:42px}.headerTitle{font-size:clamp(12px,4.2vw,17px);letter-spacing:0}.appVersion{margin-top:2px;font-size:8px}.headerRight{width:44px}}
+/* v1.2.1: №位置・スマホヘッダー */
+.readno-display{display:flex;align-items:center;gap:8px;min-height:26px;margin:8px 0 2px;font-weight:800;font-size:15px}
+.readno-label{font-weight:900}#readNo{min-width:2.5em;text-align:left}
+header{box-sizing:border-box;width:100%;display:grid;grid-template-columns:100px minmax(0,1fr) 72px;column-gap:6px;align-items:center;overflow:hidden}
+.headerSide{min-width:0}.headerLeft{width:100px;overflow:hidden}.logoButton{width:92px;height:50px;padding:0;overflow:hidden;display:flex;align-items:center;justify-content:flex-start}
+.logoButton img{display:block;width:auto;height:auto;max-width:92px;max-height:46px;object-fit:contain}.headerTitle{min-width:0;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}.headerRight{min-width:0}
+@media(max-width:600px){header{height:58px;padding:5px 7px;grid-template-columns:70px minmax(0,1fr) 44px;column-gap:4px}.headerLeft{width:70px}.logoButton{width:66px;height:46px}.logoButton img{max-width:66px;max-height:42px}.headerTitle{font-size:clamp(12px,4.2vw,17px);letter-spacing:0;line-height:1.1}.appVersion{margin-top:2px;font-size:8px}.headerRight{width:44px}}
 @media(max-width:390px){header{grid-template-columns:62px minmax(0,1fr) 40px;padding-left:5px;padding-right:5px}.headerLeft{width:62px}.logoButton{width:58px;height:44px}.logoButton img{max-width:58px;max-height:40px}.headerTitle{font-size:12px}.appVersion{font-size:7px}}

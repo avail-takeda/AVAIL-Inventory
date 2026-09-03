@@ -1,218 +1,140 @@
 const KEY="avail_inventory_v1";
 const STAFF_KEY="avail_inventory_staff_v1";
 const $=id=>document.getElementById(id);
-let records=[], editing=null, reader=null, controls=null, scanning=false;
-  setReadNo(records[editing]?.readNo);
+let records=[],editing=null,reader=null,controls=null,scanning=false;
 
-function getNextReadNo(){return records.length?Math.max(...records.map(r=>Number(r.readNo)||0))+1:1;}
-function setReadNo(no){const e=$("readNo");if(e)e.textContent=no==null?"—":String(no);}
-function clearRecordsAfterExport(){records=[];editing=null;
-  setReadNo(null);localStorage.removeItem(KEY);setReadNo(null);render();}
+function getNextReadNo(){
+  return records.length?Math.max(...records.map(r=>Number(r.readNo)||0),0)+1:1;
+}
+function setReadNo(no){
+  const el=$("readNo");
+  if(el)el.textContent=no==null?"—":String(no);
+}
 function applyAppConfig(){
-  const title = (window.APP_CONFIG?.title || "Stocktaking Counter").trim() || "Stocktaking Counter";
-  document.title = title;
-  const versionEl = document.getElementById("appVersion");
-  if(versionEl) versionEl.textContent = window.APP_CONFIG?.version || "";
-  ["headerTitle", "appTitle"].forEach(id => {
-    const el = document.getElementById(id);
-    if(el){
-      el.textContent = title;
-      el.title = title;
-    }
-  });
-  const logo = (window.APP_CONFIG?.logo || "").trim();
-  const img = document.getElementById("headerLogo");
-  if(img){
-    if(logo){
-      img.src = logo;
-      img.hidden = false;
-      img.alt = title + " ロゴ";
-    } else {
-      img.hidden = true;
-    }
-  }
+  const title=(window.APP_CONFIG?.title||"Stocktaking Counter").trim()||"Stocktaking Counter";
+  document.title=title;
+  const v=$("appVersion"); if(v)v.textContent=window.APP_CONFIG?.version||"";
+  const t=$("headerTitle"); if(t){t.textContent=title;t.title=title;}
+  const img=$("headerLogo"),logo=(window.APP_CONFIG?.logo||"").trim();
+  if(img){if(logo){img.src=logo;img.hidden=false;img.alt=title+" ロゴ";}else img.hidden=true;}
 }
 function init(){
-  buildShelves(); restore(); setReadNo(null); applyAppConfig(); render();
-  $("camera").onclick=startCamera;
-  $("close").onclick=stopCamera;
-  $("register").onclick=register;
-  $("cancel").onclick=cancelEdit;
-  $("csv").onclick=exportCSV;
-  $("clearAll").onclick=clearAll;
-  $("photo").onclick=()=>$("photoInput").click();
-  $("photoInput").onchange=decodePhoto;
-  $("staff1").oninput=saveStaff;
-  $("staff2").oninput=saveStaff;
-  $("staff1").onblur=saveStaff;
-  $("staff2").onblur=saveStaff;
-  $("staff1").onkeydown=e=>{if(e.key==="Enter")$("staff2").focus()};
-  $("staff2").onkeydown=e=>{if(e.key==="Enter")$("shelf").focus()};
-  $("qty").onkeydown=e=>{if(e.key==="Enter")register()};
-  $("jan").onfocus=()=>{if(!$("jan").value.trim()&&!editing)startCamera()};
-
-
-  if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  buildShelves();restore();applyAppConfig();render();setReadNo(getNextReadNo());
+  $("camera").onclick=startCamera;$("close").onclick=stopCamera;
+  $("register").onclick=register;$("cancel").onclick=cancelEdit;
+  $("csv").onclick=exportCSV;$("clearAll").onclick=clearAll;
+  $("photo").onclick=()=>$("photoInput").click();$("photoInput").onchange=decodePhoto;
+  $("staff1").oninput=saveStaff;$("staff2").oninput=saveStaff;
+  $("staff1").onblur=saveStaff;$("staff2").onblur=saveStaff;
+  $("staff1").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("staff2").focus();}};
+  $("staff2").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("shelf").focus();}};
+  $("qty").onkeydown=e=>{if(e.key==="Enter")register();};
+  $("jan").onfocus=()=>{if(!$("jan").value.trim()&&editing===null)startCamera();};
+  if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
 function buildShelves(){
   const s=$("shelf");
   for(let i=0;i<14;i++)for(let n=1;n<=5;n++){
-    const o=document.createElement("option");
-    o.value=String.fromCharCode(65+i)+"-"+String(n);
-    o.textContent=o.value;s.appendChild(o);
+    const o=document.createElement("option");o.value=String.fromCharCode(65+i)+"-"+n;o.textContent=o.value;s.appendChild(o);
   }
 }
 function restore(){
-  try{records=JSON.parse(localStorage.getItem(KEY)||"[]")}catch{records=[]}
-  try{
-    const staff=JSON.parse(localStorage.getItem(STAFF_KEY)||"{}");
-    $("staff1").value=staff.staff1||"";
-    $("staff2").value=staff.staff2||"";
-  }catch{
-    $("staff1").value="";
-    $("staff2").value="";
-  }
+  try{records=JSON.parse(localStorage.getItem(KEY)||"[]");if(!Array.isArray(records))records=[];}catch{records=[];}
+  let changed=false;
+  records=records.map((r,i)=>{if(!r.readNo){changed=true;return {...r,readNo:i+1};}return r;});
+  if(changed)save();
+  try{const staff=JSON.parse(localStorage.getItem(STAFF_KEY)||"{}");$("staff1").value=staff.staff1||"";$("staff2").value=staff.staff2||"";}catch{$("staff1").value="";$("staff2").value="";}
 }
-function saveStaff(){
-  localStorage.setItem(STAFF_KEY,JSON.stringify({
-    staff1:$("staff1").value.trim(),
-    staff2:$("staff2").value.trim()
-  }));
-}
-function save(){localStorage.setItem(KEY,JSON.stringify(records))}
-function jan(v){return String(v||"").replace(/\D/g,"")}
-function getShelfNumber(){
-  const base=$("shelf").value;
-  const branch=$("branch").value;
-  return branch ? `${base}-${branch}` : base;
+function saveStaff(){localStorage.setItem(STAFF_KEY,JSON.stringify({staff1:$("staff1").value.trim(),staff2:$("staff2").value.trim()}));}
+function save(){localStorage.setItem(KEY,JSON.stringify(records));}
+function jan(v){return String(v||"").replace(/\D/g,"");}
+function getShelfNumber(){const base=$("shelf").value,branch=$("branch").value;return branch?`${base}-${branch}`:base;}
+function resetInput(){
+  editing=null;$("register").textContent="登録";$("cancel").classList.add("hidden");
+  $("jan").value="";$("qty").value="";setReadNo(getNextReadNo());
 }
 function register(){
   const shelf=getShelfNumber(),j=jan($("jan").value),q=$("qty").value;
   if(!/^\d{8}(\d{5})?$/.test(j))return toast("JANコードは8桁または13桁で入力してください。");
   if(q===""||!/^[0-9]+$/.test(q))return toast("数量を入力してください。");
-  const r={shelf,jan:j,qty:Number(q)};
-  if(editing!==null){records[editing]=r;editing=null;$("register").textContent="登録";$("cancel").classList.add("hidden");toast("更新しました。")}
-  else{records.push(r);toast("登録しました。")}
-  save();render();$("jan").value="";$("qty").value="";$("jan").focus();
+  if(editing!==null){
+    const no=records[editing].readNo;
+    records[editing]={readNo:no,shelf,jan:j,qty:Number(q)};
+    save();render();resetInput();$("jan").focus();toast(`№${no}を更新しました。`);
+  }else{
+    const no=getNextReadNo();
+    records.push({readNo:no,shelf,jan:j,qty:Number(q)});
+    save();render();$("jan").value="";$("qty").value="";setReadNo(getNextReadNo());$("jan").focus();toast(`№${no}を登録しました。`);
+  }
 }
 function edit(i){
-  const r=records[i];
-  editing=i;
-  const m=r.shelf.match(/^([A-N])-0?([1-5])(?:-([1-9]))?$/);
-  if(m){
-    $("shelf").value=`${m[1]}-${m[2]}`;
-    $("branch").value=m[3]||"";
-  }else{
-    $("shelf").value=r.shelf;
-    $("branch").value="";
-  }
-  $("jan").value=r.jan;
-  $("qty").value=r.qty;
-  $("register").textContent="更新";
-  $("cancel").classList.remove("hidden");
-  scrollTo({top:0,behavior:"smooth"});
-  $("qty").focus();
+  const r=records[i];if(!r)return;
+  editing=i;setReadNo(r.readNo);
+  const m=String(r.shelf).match(/^([A-N])-0?([1-5])(?:-([1-9]))?$/);
+  if(m){$("shelf").value=`${m[1]}-${m[2]}`;$("branch").value=m[3]||"";}else{$("shelf").value=r.shelf;$("branch").value="";}
+  $("jan").value=r.jan;$("qty").value=r.qty;$("register").textContent="更新";$("cancel").classList.remove("hidden");
+  scrollTo({top:0,behavior:"smooth"});$("qty").focus();
 }
-function cancelEdit(){
-  editing=null;
-  $("register").textContent="登録";
-  $("cancel").classList.add("hidden");
-  $("branch").value="";
-  $("jan").value="";
-  $("qty").value="";
-}
-function del(i){if(confirm(`No.${i+1}を削除しますか？`)){records.splice(i,1);save();render();toast("削除しました。")}}
-function closeSettings(){
-  $("settingsModal").classList.add("hidden");
-}
-function handleLogoUpload(e){
-  const f=e.target.files?.[0];
-  e.target.value="";
-  if(!f)return;
-  if(!f.type.startsWith("image/"))return toast("画像ファイルを選択してください。");
-  if(f.size>3*1024*1024)return toast("ロゴ画像は3MB以下にしてください。");
-  const reader=new FileReader();
-  reader.onload=()=>{
-    try{
-      localStorage.setItem(LOGO_KEY,reader.result);
-      applyLogo(reader.result);
-      toast("ロゴを設定しました。");
-    }catch{
-      toast("ロゴを保存できませんでした。画像サイズを小さくしてください。");
-    }
-  };
-  reader.readAsDataURL(f);
-}
-function removeLogo(){
-  localStorage.removeItem(LOGO_KEY);
-  $("headerLogo").hidden=true;
-  $("headerLogo").removeAttribute("src");
-  $("logoPlaceholder").hidden=false;
-  $("logoPreview").hidden=true;
-  $("logoPreview").removeAttribute("src");
-  $("logoPreviewEmpty").hidden=false;
-  toast("ロゴを削除しました。");
+function cancelEdit(){resetInput();$("branch").value="";}
+function del(i){
+  const r=records[i];if(!r)return;
+  if(confirm(`№${r.readNo}を削除しますか？`)){records.splice(i,1);save();render();setReadNo(getNextReadNo());toast(`№${r.readNo}を削除しました。`);}
 }
 function render(){
   $("count").textContent=records.length+"件";
-  $("list").innerHTML=records.length?records.map((r,i)=>`<div class="record"><div class="seq">No.${i+1}</div><div><div class="shelfname">${esc(r.shelf)}</div><div class="jantext">${esc(r.jan)}</div></div><div class="recordqty">${r.qty}</div><div class="recordActions"><button class="small" onclick="edit(${i})">編集</button><button class="small del" onclick="del(${i})">削除</button></div></div>`).join(""):'<div class="empty">まだデータがありません</div>';
+  $("list").innerHTML=records.length?records.map((r,i)=>`<div class="record"><div class="seq">№${esc(r.readNo)}</div><div><div class="shelfname">${esc(r.shelf)}</div><div class="jantext">${esc(r.jan)}</div></div><div class="recordqty">${esc(r.qty)}</div><div class="recordActions"><button class="small" onclick="edit(${i})">編集</button><button class="small del" onclick="del(${i})">削除</button></div></div>`).join(""):'<div class="empty">まだデータがありません</div>';
 }
-function esc(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
-function clearAll(){if(records.length&&confirm("入力済みデータをすべて削除しますか？")){records=[];save();render();toast("全データを削除しました。")}}
-function csvText(){return "\uFEFF"+"棚番号,JANコード,数量\r\n"+records.map(r=>[r.shelf,r.jan,r.qty].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n")+"\r\n"}
+function esc(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
+function clearAll(){if(records.length&&confirm("入力済みデータをすべて削除しますか？")){records=[];save();resetInput();render();toast("全データを削除しました。");}}
+function csvText(){return "\uFEFF"+"棚番号,JANコード,数量\r\n"+records.map(r=>[r.shelf,r.jan,r.qty].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n")+"\r\n";}
 function filename(){
-  const d=new Date();
-  const date=String(d.getFullYear()).slice(-2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
-  const shelf=records[0]?.shelf||getShelfNumber()||"A-1";
-  const staff1=$("staff1").value.trim();
-  const staff2=$("staff2").value.trim();
-  const staff=(`${staff1}${staff2}`).replace(/[\\/:*?"<>|]/g,"");
+  const d=new Date(),date=String(d.getFullYear()).slice(-2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
+  const shelf=records[0]?.shelf||getShelfNumber()||"A-1",staff=(`${$("staff1").value.trim()}${$("staff2").value.trim()}`).replace(/[\\/:*?"<>|]/g,"");
   return `${date}_${shelf}_${staff}.csv`;
 }
 async function exportCSV(){
-  if(!confirm("CSV出力後、入力済みデータをすべて消去します。よろしいですか？")) return;
-
   if(!records.length)return toast("出力するデータがありません。");
   const blob=new Blob([csvText()],{type:"text/csv;charset=utf-8"}),name=filename();
   try{
     const file=new File([blob],name,{type:"text/csv"});
-    if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({title:name,files:[file]});return}
-  }catch(e){}
-  const a=document.createElement("a"),u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);toast(name+"を出力しました。");
+    if(navigator.share&&navigator.canShare?.({files:[file]})){
+      await navigator.share({title:name,files:[file]});
+      if(confirm("CSVの送信が完了しました。入力済みデータを消去しますか？")){
+        records=[];save();resetInput();render();toast("CSV出力済みデータを消去しました。");
+      }
+      return;
+    }
+  }catch(e){if(e?.name==="AbortError")return;}
+  const a=document.createElement("a"),u=URL.createObjectURL(blob);
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);
+  if(confirm("CSVのダウンロードを開始しました。入力済みデータを消去しますか？")){
+    records=[];save();resetInput();render();toast("CSV出力済みデータを消去しました。");
+  }else toast(name+"を出力しました。");
 }
 async function startCamera(){
-  if(scanning)return;
-  $("modal").classList.remove("hidden");$("status").textContent="カメラを起動しています…";
+  if(scanning)return;$("modal").classList.remove("hidden");$("status").textContent="カメラを起動しています…";
   try{
     reader=new ZXingBrowser.BrowserMultiFormatOneDReader();scanning=true;
-    controls=await reader.decodeFromConstraints({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}},$("video"),(result)=>{
-      if(!result)return;
-      const j=jan(result.getText());
-      if(/^\d{8}(\d{5})?$/.test(j)){
-        $("jan").value=j;navigator.vibrate?.(80);stopCamera();$("qty").focus();
-      }
-    });
-    $("status").textContent="読み取り中…";
-  }catch(e){console.error(e);scanning=false;$("status").textContent="カメラを起動できません。Safariのカメラ許可とHTTPS接続を確認してください。"}
-
-  clearRecordsAfterExport();
+    controls=await reader.decodeFromConstraints({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}},$("video"),result=>{
+      if(!result)return;const j=jan(result.getText());
+      if(/^\d{8}(\d{5})?$/.test(j)){$("jan").value=j;navigator.vibrate?.(80);stopCamera();$("qty").focus();}
+    });$("status").textContent="読み取り中…";
+  }catch(e){console.error(e);scanning=false;$("status").textContent="カメラを起動できません。Safariのカメラ許可とHTTPS接続を確認してください。";}
 }
 function stopCamera(){
-  try{controls?.stop()}catch{}controls=null;scanning=false;
-  const v=$("video"),s=v.srcObject;if(s)s.getTracks().forEach(t=>t.stop());v.srcObject=null;
-  $("modal").classList.add("hidden");
+  try{controls?.stop();}catch{}controls=null;scanning=false;
+  const v=$("video"),s=v.srcObject;if(s)s.getTracks().forEach(t=>t.stop());v.srcObject=null;$("modal").classList.add("hidden");
 }
 async function decodePhoto(e){
   const f=e.target.files?.[0];e.target.value="";if(!f)return;
   const img=new Image();img.onload=async()=>{
     const c=document.createElement("canvas"),max=1800,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
     c.width=img.naturalWidth*scale;c.height=img.naturalHeight*scale;c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-    try{
-      const r=new ZXingBrowser.BrowserMultiFormatOneDReader(),res=await r.decodeFromCanvas(c),j=jan(res.getText());
-      if(/^\d{8}(\d{5})?$/.test(j)){$("jan").value=j;stopCamera();$("qty").focus()}else $("status").textContent="JANとして認識できませんでした。";
+    try{const r=new ZXingBrowser.BrowserMultiFormatOneDReader(),res=await r.decodeFromCanvas(c),j=jan(res.getText());
+      if(/^\d{8}(\d{5})?$/.test(j)){$("jan").value=j;stopCamera();$("qty").focus();}else $("status").textContent="JANとして認識できませんでした。";
     }catch{$("status").textContent="JANコードを認識できませんでした。もう一度撮影してください。"}
     URL.revokeObjectURL(img.src);
   };img.src=URL.createObjectURL(f);
 }
-function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(window._toast);window._toast=setTimeout(()=>e.classList.remove("show"),2200)}
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(window._toast);window._toast=setTimeout(()=>e.classList.remove("show"),2200);}
 addEventListener("beforeunload",stopCamera);addEventListener("load",init);window.edit=edit;window.del=del;
