@@ -1,5 +1,7 @@
 const KEY="avail_inventory_v1";
 const STAFF_KEY="avail_inventory_staff_v1";
+const HISTORY_KEY="avail_inventory_csv_history_v1";
+let loadedHistoryName=null;
 const $=id=>document.getElementById(id);
 let records=[],editing=null,reader=null,controls=null,scanning=false;
 
@@ -19,10 +21,11 @@ function applyAppConfig(){
   if(img){if(logo){img.src=logo;img.hidden=false;img.alt=title+" ロゴ";}else img.hidden=true;}
 }
 function init(){
-  buildShelves();restore();applyAppConfig();render();setReadNo(getNextReadNo());
+  buildShelves();restore();applyAppConfig();render();renderHistory();setReadNo(getNextReadNo());
   $("camera").onclick=startCamera;$("close").onclick=stopCamera;
   $("register").onclick=register;$("cancel").onclick=cancelEdit;
   $("csv").onclick=exportCSV;$("clearAll").onclick=clearAll;
+  $("clearHistory").onclick=clearHistory;
   $("photo").onclick=()=>$("photoInput").click();$("photoInput").onchange=decodePhoto;
   $("staff1").oninput=saveStaff;$("staff2").oninput=saveStaff;
   $("staff1").onblur=saveStaff;$("staff2").onblur=saveStaff;
@@ -88,9 +91,48 @@ function esc(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",
 function clearAll(){if(records.length&&confirm("入力済みデータをすべて削除しますか？")){records=[];save();resetInput();render();toast("全データを削除しました。");}}
 function csvText(){return "\uFEFF"+"棚番号,JANコード,数量\r\n"+records.map(r=>[r.shelf,r.jan,r.qty].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n")+"\r\n";}
 function filename(){
+  if(loadedHistoryName)return loadedHistoryName;
   const d=new Date(),date=String(d.getFullYear()).slice(-2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
   const shelf=records[0]?.shelf||getShelfNumber()||"A-1",staff=(`${$("staff1").value.trim()}${$("staff2").value.trim()}`).replace(/[\\/:*?"<>|]/g,"");
   return `${date}_${shelf}_${staff}.csv`;
+}
+function getHistory(){
+  try{const h=JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");return Array.isArray(h)?h:[];}catch{return [];}
+}
+function saveHistory(h){localStorage.setItem(HISTORY_KEY,JSON.stringify(h));}
+function historySnapshot(){return records.map(r=>({readNo:r.readNo,shelf:r.shelf,jan:r.jan,qty:r.qty}));}
+function upsertHistory(name){
+  const h=getHistory();
+  const item={filename:name,exportedAt:new Date().toISOString(),records:historySnapshot()};
+  const i=h.findIndex(x=>x.filename===name);
+  if(i>=0)h[i]=item;else h.unshift(item);
+  saveHistory(h);renderHistory();
+}
+function renderHistory(){
+  const h=getHistory(),c=$("historyCount"),box=$("csvHistory");
+  if(c)c.textContent=h.length+"件";
+  if(!box)return;
+  if(!h.length){box.innerHTML='<div class="empty">CSV出力済みファイルはありません</div>';return;}
+  box.innerHTML=h.map((x,i)=>{
+    const d=x.exportedAt?new Date(x.exportedAt):null;
+    const dt=d&&!isNaN(d)?d.toLocaleString("ja-JP"):"";
+    return `<button class="history-item" onclick="loadHistory(${i})"><span class="history-filename">${esc(x.filename)}</span><span class="history-date">${esc(dt)}</span></button>`;
+  }).join("");
+}
+function loadHistory(i){
+  const h=getHistory(),x=h[i];if(!x)return;
+  if(records.length&&!confirm("未出力のデータがあります。出力済みファイルを表示しますか？"))return;
+  records=(x.records||[]).map((r,n)=>({...r,readNo:r.readNo||n+1}));
+  loadedHistoryName=x.filename;editing=null;
+  $("jan").value="";$("qty").value="";$("register").textContent="登録";$("cancel").classList.add("hidden");
+  save();render();setReadNo(getNextReadNo());scrollTo({top:0,behavior:"smooth"});
+  toast(`${x.filename}を呼び出しました。`);
+}
+function clearHistory(){
+  if(!getHistory().length)return toast("削除する履歴がありません。");
+  if(confirm("CSV出力済みファイルの履歴をすべて削除しますか？")){
+    localStorage.removeItem(HISTORY_KEY);renderHistory();toast("CSV出力履歴を削除しました。");
+  }
 }
 async function exportCSV(){
   if(!records.length)return toast("出力するデータがありません。");
@@ -99,6 +141,7 @@ async function exportCSV(){
     const file=new File([blob],name,{type:"text/csv"});
     if(navigator.share&&navigator.canShare?.({files:[file]})){
       await navigator.share({title:name,files:[file]});
+      upsertHistory(name);
       if(confirm("CSVの送信が完了しました。入力済みデータを消去しますか？")){
         records=[];save();resetInput();render();toast("CSV出力済みデータを消去しました。");
       }
@@ -106,7 +149,8 @@ async function exportCSV(){
     }
   }catch(e){if(e?.name==="AbortError")return;}
   const a=document.createElement("a"),u=URL.createObjectURL(blob);
-  a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  upsertHistory(name);setTimeout(()=>URL.revokeObjectURL(u),1000);
   if(confirm("CSVのダウンロードを開始しました。入力済みデータを消去しますか？")){
     records=[];save();resetInput();render();toast("CSV出力済みデータを消去しました。");
   }else toast(name+"を出力しました。");
@@ -137,4 +181,4 @@ async function decodePhoto(e){
   };img.src=URL.createObjectURL(f);
 }
 function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(window._toast);window._toast=setTimeout(()=>e.classList.remove("show"),2200);}
-addEventListener("beforeunload",stopCamera);addEventListener("load",init);window.edit=edit;window.del=del;
+addEventListener("beforeunload",stopCamera);addEventListener("load",init);window.edit=edit;window.del=del;window.loadHistory=loadHistory;
