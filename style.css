@@ -111,3 +111,12 @@ header{box-sizing:border-box;width:100%;display:grid;grid-template-columns:100px
 .history-item{width:100%;border:1px solid #ddd;border-radius:11px;background:#fafafa;padding:12px;text-align:left;display:flex;flex-direction:column;gap:4px;cursor:pointer}
 .history-filename{font-weight:800;word-break:break-all;color:#111}.history-date{font-size:12px;color:#777}
 @media(max-width:600px){.history-card{padding:15px;border-radius:16px}.history-head{align-items:flex-start}.history-clear{font-size:12px;padding:9px 10px}.history-item{padding:11px}}
+
+
+/* v1.4.0 */
+.data-actions{display:flex;align-items:center;gap:8px}
+.bulk-delete{border:0;border-radius:10px;padding:10px 13px;background:#f1e7e7;color:#8a2222;font-weight:800}
+@media(max-width:600px){
+  .data-actions{gap:6px}
+  .data-actions button{font-size:12px;padding:9px 10px}
+}
