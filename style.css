@@ -120,3 +120,31 @@ header{box-sizing:border-box;width:100%;display:grid;grid-template-columns:100px
   .data-actions{gap:6px}
   .data-actions button{font-size:12px;padding:9px 10px}
 }
+
+
+/* v1.5.0: 入力済みデータ操作・CSV履歴のワンタップ選択 */
+.data-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.data-actions button{white-space:nowrap}
+.bulk-delete{border:0;border-radius:12px;min-height:44px;padding:0 18px;background:#f8e8e8;color:#a31e1e;font-weight:800}
+.history-entry{border-top:1px solid #eee;padding:8px 0}
+.history-entry:first-child{border-top:0}
+.history-item{width:100%;border:1px solid #ddd;border-radius:10px;background:#fafafa;padding:11px 12px;text-align:left;display:flex;flex-direction:column;gap:4px;cursor:pointer}
+.history-item:active{transform:scale(.99)}
+.history-filename{font-weight:800;word-break:break-all;color:#111}
+.history-date{font-size:12px;color:#777}
+.history-entry.selected .history-item{border-color:#111;background:#f5f5f5}
+.history-actions{display:flex;gap:7px;padding:8px 0 2px}
+.history-actions .small{flex:1;min-height:42px;font-size:13px}
+.history-load{background:#111;color:#fff}
+.history-delete{background:#f8e8e8;color:#a31e1e}
+.history-cancel{background:#eee;color:#111}
+@media(max-width:600px){
+  .listhead{align-items:flex-start}
+  .data-actions{gap:5px}
+  .data-actions button{font-size:12px;padding:0 10px;min-height:42px}
+  .history-actions{gap:5px}
+  .history-actions .small{padding:0 8px}
+}
+@media(max-width:380px){
+  .data-actions button{font-size:11px;padding:0 8px}
+}

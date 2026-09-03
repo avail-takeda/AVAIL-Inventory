@@ -32,7 +32,7 @@ function init(){
   $("staff1").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("staff2").focus();}};
   $("staff2").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("shelf").focus();}};
   $("qty").onkeydown=e=>{if(e.key==="Enter")register();};
-  $("jan").onfocus=()=>{if(!$("jan").value.trim()&&editing===null)startCamera();};
+  $("jan").onfocus=()=>{if(!$("jan").value.trim()&&editing===null&&!scanning)startCamera();};
   if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
 function buildShelves(){
@@ -53,7 +53,8 @@ function save(){localStorage.setItem(KEY,JSON.stringify(records));}
 function jan(v){return String(v||"").replace(/\D/g,"");}
 function getShelfNumber(){const base=$("shelf").value,branch=$("branch").value;return branch?`${base}-${branch}`:base;}
 function resetInput(){
-  editing=null;$("register").textContent="登録";$("cancel").classList.add("hidden");
+  editing=null;loadedHistoryName=null;
+  $("register").textContent="登録";$("cancel").classList.add("hidden");
   $("jan").value="";$("qty").value="";setReadNo(getNextReadNo());
 }
 function register(){
@@ -64,10 +65,12 @@ function register(){
     const no=records[editing].readNo;
     records[editing]={readNo:no,shelf,jan:j,qty:Number(q)};
     save();render();resetInput();$("jan").focus();toast(`№${no}を更新しました。`);
+    setTimeout(()=>startCamera(),80);
   }else{
     const no=getNextReadNo();
     records.push({readNo:no,shelf,jan:j,qty:Number(q)});
     save();render();$("jan").value="";$("qty").value="";setReadNo(getNextReadNo());$("jan").focus();toast(`№${no}を登録しました。`);
+    setTimeout(()=>startCamera(),80);
   }
 }
 function edit(i){
@@ -119,22 +122,62 @@ function renderHistory(){
     return `<button class="history-item" onclick="loadHistory(${i})"><span class="history-filename">${esc(x.filename)}</span><span class="history-date">${esc(dt)}</span></button>`;
   }).join("");
 }
-function loadHistory(i){
+let selectedHistoryIndex=null;
+
+function renderHistory(){
+  const h=getHistory(),c=$("historyCount"),box=$("csvHistory");
+  if(c)c.textContent=h.length+"件";
+  if(!box)return;
+  if(!h.length){
+    box.innerHTML='<div class="empty">CSV出力済みファイルはありません</div>';
+    return;
+  }
+  box.innerHTML=h.map((x,i)=>{
+    const d=x.exportedAt?new Date(x.exportedAt):null;
+    const dt=d&&!isNaN(d)?d.toLocaleString("ja-JP"):"";
+    const selected=selectedHistoryIndex===i;
+    return `<div class="history-entry ${selected?"selected":""}">
+      <button class="history-item" onclick="selectHistory(${i})">
+        <span class="history-filename">${esc(x.filename)}</span>
+        <span class="history-date">${esc(dt)}</span>
+      </button>
+      ${selected?`<div class="history-actions">
+        <button class="small history-load" onclick="readHistory(${i})">読込み</button>
+        <button class="small history-delete" onclick="deleteHistory(${i})">削除</button>
+        <button class="small history-cancel" onclick="cancelHistorySelection()">キャンセル</button>
+      </div>`:""}
+    </div>`;
+  }).join("");
+}
+function selectHistory(i){
+  selectedHistoryIndex=i;
+  renderHistory();
+}
+function cancelHistorySelection(){
+  selectedHistoryIndex=null;
+  renderHistory();
+}
+function readHistory(i){
   const h=getHistory(),x=h[i];if(!x)return;
-  const action=prompt(`「${x.filename}」\n\n1：読込み\n2：削除\nその他：キャンセル`);
-  if(action==="2"){deleteHistory(i);return;}
-  if(action!=="1")return;
-  if(records.length&&!confirm("未出力のデータがあります。出力済みファイルを表示しますか？"))return;
+  if(records.length&&!confirm("未出力のデータがあります。出力済みファイルを表示しますか？")){
+    selectedHistoryIndex=null;renderHistory();return;
+  }
   records=(x.records||[]).map((r,n)=>({...r,readNo:r.readNo||n+1}));
-  loadedHistoryName=x.filename;editing=null;
-  $("jan").value="";$("qty").value="";$("register").textContent="登録";$("cancel").classList.add("hidden");
-  save();render();setReadNo(getNextReadNo());scrollTo({top:0,behavior:"smooth"});
+  loadedHistoryName=x.filename;
+  editing=null;
+  $("jan").value="";$("qty").value="";
+  $("register").textContent="登録";$("cancel").classList.add("hidden");
+  save();render();setReadNo(getNextReadNo());
+  selectedHistoryIndex=null;renderHistory();
   toast(`${x.filename}を呼び出しました。`);
+  scrollTo({top:0,behavior:"smooth"});
 }
 function deleteHistory(i){
   const h=getHistory(),x=h[i];if(!x)return;
   if(confirm(`「${x.filename}」を削除しますか？`)){
-    h.splice(i,1);saveHistory(h);renderHistory();toast("CSV出力履歴を削除しました。");
+    h.splice(i,1);saveHistory(h);
+    if(selectedHistoryIndex===i)selectedHistoryIndex=null;
+    renderHistory();toast("CSV出力履歴を削除しました。");
   }
 }
 function clearHistory(){
@@ -194,7 +237,7 @@ async function startCamera(){
     reader=new ZXingBrowser.BrowserMultiFormatOneDReader();scanning=true;
     controls=await reader.decodeFromConstraints({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}},$("video"),result=>{
       if(!result)return;const j=jan(result.getText());
-      if(/^\d{8}(\d{5})?$/.test(j)){$("jan").value=j;navigator.vibrate?.(80);stopCamera();$("qty").focus();}
+      if(/^\d{8}(\d{5})?$/.test(j)){$("jan").value=j;navigator.vibrate?.(80);stopCamera();setTimeout(()=>$("qty").focus(),50);}
     });$("status").textContent="読み取り中…";
   }catch(e){console.error(e);scanning=false;$("status").textContent="カメラを起動できません。Safariのカメラ許可とHTTPS接続を確認してください。";}
 }
@@ -208,10 +251,10 @@ async function decodePhoto(e){
     const c=document.createElement("canvas"),max=1800,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
     c.width=img.naturalWidth*scale;c.height=img.naturalHeight*scale;c.getContext("2d").drawImage(img,0,0,c.width,c.height);
     try{const r=new ZXingBrowser.BrowserMultiFormatOneDReader(),res=await r.decodeFromCanvas(c),j=jan(res.getText());
-      if(/^\d{8}(\d{5})?$/.test(j)){$("jan").value=j;stopCamera();$("qty").focus();}else $("status").textContent="JANとして認識できませんでした。";
+      if(/^\d{8}(\d{5})?$/.test(j)){$("jan").value=j;stopCamera();setTimeout(()=>$("qty").focus(),50);}else $("status").textContent="JANとして認識できませんでした。";
     }catch{$("status").textContent="JANコードを認識できませんでした。もう一度撮影してください。"}
     URL.revokeObjectURL(img.src);
   };img.src=URL.createObjectURL(f);
 }
 function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(window._toast);window._toast=setTimeout(()=>e.classList.remove("show"),2200);}
-addEventListener("beforeunload",stopCamera);addEventListener("load",init);window.edit=edit;window.del=del;window.loadHistory=loadHistory;
+addEventListener("beforeunload",stopCamera);addEventListener("load",init);window.edit=edit;window.del=del;window.selectHistory=selectHistory;window.readHistory=readHistory;window.deleteHistory=deleteHistory;window.cancelHistorySelection=cancelHistorySelection;

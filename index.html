@@ -68,8 +68,12 @@
 <div class="actions"><button id="register" class="primary">登録</button><button id="cancel" class="secondary hidden">キャンセル</button></div>
 </section>
 <section class="card">
-<div class="listhead"><div><h2>入力済みデータ</h2><small id="count">0件</small></div><button id="csv" class="export">CSV出力</button></div>
+<div class="listhead"><div><h2>入力済みデータ</h2><small id="count">0件</small></div><div class="data-actions"><button id="csv" class="export">CSV出力</button><button id="clearAll" class="bulk-delete">一括削除</button></div></div>
 <div id="list"><div class="empty">まだデータがありません</div></div>
+</section>
+<section class="history-card">
+<div class="history-head"><div><h2>CSV出力済みデータ</h2><div id="historyCount" class="history-count">0件</div></div><button id="clearHistory" class="history-clear">一覧を一括削除</button></div>
+<div id="csvHistory" class="csv-history"><div class="empty">CSV出力済みファイルはありません</div></div>
 </section>
 </main>
 
@@ -84,11 +88,8 @@
 </div>
 <div id="toast" class="toast"></div>
 <script src="https://unpkg.com/@zxing/browser@0.2.1/umd/zxing-browser.min.js"></script>
-<script src="config.js"></script>
-<script src="app.js"></script>
-<section class="history-card">
-<div class="history-head"><div><h2>CSV出力済みデータ</h2><div id="historyCount" class="history-count">0件</div></div><button id="clearHistory" class="history-clear">一覧を一括削除</button></div>
-<div id="csvHistory" class="csv-history"><div class="empty">CSV出力済みファイルはありません</div></div>
-</section>
+<script src="config.js?v=1.5.0"></script>
+<script src="app.js?v=1.5.0"></script>
+
 </body>
 </html>
