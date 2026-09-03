@@ -2,7 +2,12 @@ const KEY="avail_inventory_v1";
 const STAFF_KEY="avail_inventory_staff_v1";
 const $=id=>document.getElementById(id);
 let records=[], editing=null, reader=null, controls=null, scanning=false;
+  setReadNo(records[editing]?.readNo);
 
+function getNextReadNo(){return records.length?Math.max(...records.map(r=>Number(r.readNo)||0))+1:1;}
+function setReadNo(no){const e=$("readNo");if(e)e.textContent=no==null?"—":String(no);}
+function clearRecordsAfterExport(){records=[];editing=null;
+  setReadNo(null);localStorage.removeItem(KEY);setReadNo(null);render();}
 function applyAppConfig(){
   const title = (window.APP_CONFIG?.title || "Stocktaking Counter").trim() || "Stocktaking Counter";
   document.title = title;
@@ -28,7 +33,7 @@ function applyAppConfig(){
   }
 }
 function init(){
-  buildShelves(); restore(); applyAppConfig(); render();
+  buildShelves(); restore(); setReadNo(null); applyAppConfig(); render();
   $("camera").onclick=startCamera;
   $("close").onclick=stopCamera;
   $("register").onclick=register;
@@ -165,6 +170,8 @@ function filename(){
   return `${date}_${shelf}_${staff}.csv`;
 }
 async function exportCSV(){
+  if(!confirm("CSV出力後、入力済みデータをすべて消去します。よろしいですか？")) return;
+
   if(!records.length)return toast("出力するデータがありません。");
   const blob=new Blob([csvText()],{type:"text/csv;charset=utf-8"}),name=filename();
   try{
@@ -187,6 +194,8 @@ async function startCamera(){
     });
     $("status").textContent="読み取り中…";
   }catch(e){console.error(e);scanning=false;$("status").textContent="カメラを起動できません。Safariのカメラ許可とHTTPS接続を確認してください。"}
+
+  clearRecordsAfterExport();
 }
 function stopCamera(){
   try{controls?.stop()}catch{}controls=null;scanning=false;
